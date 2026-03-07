@@ -1,0 +1,58 @@
+<div class="dxxm-citizens-container">
+    <header class="citizens-header">
+        <img src="{{#if locationFlag}}{{locationFlag}}{{else}}icons/svg/d20-grey.svg{{/if}}" alt="Ícone do Local" class="location-flag">
+        <div class="citizens-nav-container">
+            {{#if pages.length}}
+            <nav class="citizens-hub-bar main-hub-bar">
+                {{#each pages}}
+                    <button class="hub-tab page-tab {{#if this.active}}active{{/if}} {{#if this.isHidden}}tab-hidden{{/if}}" data-page="{{this.id}}">
+                        {{this.name}}
+                    </button>
+                {{/each}}
+            </nav>
+            {{/if}}
+            {{#if groups.length}}
+            <nav class="citizens-hub-bar sub-hub-bar">
+                {{#each groups}}
+                    <button class="hub-tab group-tab {{#if this.active}}active{{/if}} {{#if this.isHidden}}tab-hidden{{/if}}" data-group="{{this.id}}">
+                        {{this.name}}
+                    </button>
+                {{/each}}
+            </nav>
+            {{/if}}
+        </div>
+    </header>
+
+    <section class="citizens-portrait-container">
+        <div class="citizens-grid">
+            {{#each activeNPCs}}
+                <div class="citizen-portrait-wrapper {{#if this.isHidden}}hidden-npc{{/if}}" data-npc-id="{{this.id}}" style="{{this.style}}" data-tooltip="{{this.displayName}}" data-tooltip-direction="DOWN">
+                    <img src="{{this.img}}" alt="{{this.name}}" class="citizen-portrait-img" draggable="false">
+                    {{#if this.mask}}
+                        <img src="{{this.mask}}" class="citizen-portrait-mask" draggable="false">
+                    {{/if}}
+                </div>
+            {{else}}
+                <div class="empty-state">
+                    <i class="fas fa-users-slash"></i>
+                    <p>Nenhum cidadão registrado neste grupo.<br>Use o formato: <em>Nome | Apelido | imagem.png | mascara.png</em></p>
+                </div>
+            {{/each}}
+        </div>
+    </section>
+
+    <footer class="citizens-opinion-indicator">
+        <div class="opinion-bar">
+            <span class="opinion-label" data-tooltip="Como a comunidade enxerga os investigadores">Opinião Pública:</span>
+            <div class="opinion-container">
+                <div class="opinion-track" {{#if isGM}}style="cursor: pointer;"{{/if}}>
+                    <div class="opinion-marker" style="left: {{publicOpinion}}%;" data-tooltip="{{opinionTooltip}}" data-tooltip-direction="DOWN"></div>
+                </div>
+                <div class="opinion-labels">
+                    <span>Inimigo Declarado</span><span>Hostil</span><span>Desconfiado</span><span>Neutro</span><span>Respeitoso</span><span>Aliado</span><span>Leal</span>
+                </div>
+            </div>
+            <span class="opinion-percentage-text" style="font-family: 'Modesto Condensed', serif; font-size: 1.2rem; width: 45px; text-align: right;">{{opinionTooltip}}</span>
+        </div>
+    </footer>
+</div>

@@ -1,0 +1,42 @@
+{
+  "id": "ui-redesign",
+  "title": "Investigative UI Redesign",
+  "description": "Sistema de interface personalizada para RPG de investigação com foco em colecionáveis, inventário coletivo e censo de NPCs.",
+  "version": "1.22.0",
+  "authors": [
+    {
+      "name": "DXXM",
+      "flags": {}
+    }
+  ],
+  "compatibility": {
+    "minimum": "12",
+    "verified": "13"
+  },
+  "esmodules": [
+    "scripts/main.js"
+  ],
+  "styles": [
+    "styles/citizens.css",
+    "styles/evidence.css",
+    "styles/viewer.css",
+    "styles/investigation.css",
+    "styles/soundboard.css",
+    "styles/item-v3.css"
+  ],
+"languages": [
+    {
+      "lang": "en",
+      "name": "English",
+      "path": "lang/pt-BR.json"
+    },
+    {
+      "lang": "pt-BR",
+      "name": "Português (Brasil)",
+      "path": "lang/pt-BR.json"
+    }
+  ],
+  "flags": {
+    "allow_html": true
+  }
+}

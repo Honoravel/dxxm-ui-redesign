@@ -1,0 +1,24 @@
+<div class="dxxm-viewer-container">
+    <header class="viewer-header">
+        {{#if isIcon}}
+            <div class="viewer-image-container icon-mode">
+                <i class="{{img}} viewer-icon"></i>
+            </div>
+        {{else}}
+            <img src="{{img}}" alt="{{name}}" class="viewer-image">
+        {{/if}}
+        <h1 class="viewer-title">{{name}}</h1>
+    </header>
+    
+    <section class="viewer-content">
+        <div class="viewer-short-desc">
+            {{shortDesc}}
+        </div>
+        
+        {{#if longDesc}}
+            <div class="viewer-long-desc">
+                {{{longDesc}}}
+            </div>
+        {{/if}}
+    </section>
+</div>

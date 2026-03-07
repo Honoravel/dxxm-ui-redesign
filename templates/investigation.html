@@ -1,0 +1,79 @@
+<div class="inv-main-container">
+    <header class="inv-header-wrapper">
+        <img class="inv-location-flag" src="{{npcPortrait}}" alt="NPC flag">
+        <div class="inv-nav-container">
+            <nav class="inv-hub-bar inv-groups-bar">
+                {{#each npcGroups}}
+                    <button class="inv-hub-tab inv-group-tab {{#if this.active}}active{{/if}}" data-group-id="{{this.id}}">
+                        {{this.name}}
+                    </button>
+                {{/each}}
+            </nav>
+            
+            <nav class="inv-hub-bar inv-npcs-bar">
+                {{#each npcPages}}
+                    <button class="inv-hub-tab inv-npc-tab {{#if this.active}}active{{/if}}" data-page-id="{{this.id}}">
+                        {{this.name}}
+                    </button>
+                {{/each}}
+            </nav>
+        </div>
+    </header>
+
+    <div class="inv-content-layout">
+        <section class="inv-sidebar-left">
+            <div class="inv-topic-list">
+                {{#each topics}}
+                    <div class="inv-accordion-item {{#if this.expanded}}expanded{{/if}}">
+                        <div class="inv-topic-header" data-action="toggleTopic" data-topic="{{this.title}}">
+                            <span class="inv-topic-title" data-action="topicMenu" data-topic="{{this.title}}" title="Opções da nota">
+                                {{this.title}}
+                            </span>
+                            
+                            <div class="inv-header-actions">
+                                {{#if this.isEditing}}
+                                    <i class="fa-solid fa-floppy-disk" data-action="saveTopic" data-topic="{{this.title}}" title="Salvar"></i>
+                                {{else}}
+                                    <i class="fa-solid fa-pen-nib" data-action="editTopic" data-topic="{{this.title}}" title="Editar"></i>
+                                {{/if}}
+
+                                <i class="fa-solid fa-caret-down inv-arrow"></i>
+                            </div>
+                        </div>
+
+                        <div class="inv-content-wrapper">
+                            {{#if this.isEditing}}
+                                <prose-mirror name="content-{{@index}}" data-topic="{{this.title}}" value="{{this.rawContent}}" editable="true">
+                                    {{{this.rawContent}}}
+                                </prose-mirror>
+                            {{else}}
+                                <div class="inv-text-body">
+                                    {{{this.enrichedContent}}}
+                                </div>
+                            {{/if}}
+                        </div>
+                    </div>
+                {{/each}}
+            </div>
+            
+            <div class="inv-add-note-footer" data-action="addTopic">
+                <span>Adicionar uma nova nota</span>
+                <i class="fas fa-plus"></i>
+            </div>
+        </section>
+
+        <aside class="inv-portrait-column">
+            <div class="inv-portrait-box">
+                <div class="inv-portrait-wrapper">
+                    <img src="{{npcPortrait}}" class="inv-portrait-img">
+                    {{#if npcMask}}
+                        <img src="{{npcMask}}" class="inv-portrait-frame" style="border: none;">
+                    {{else}}
+                        <div class="inv-portrait-frame"></div>
+                    {{/if}}
+                </div>
+                <div class="inv-npc-name">{{activePage.name}}</div>
+            </div>
+        </aside>
+    </div>
+</div>

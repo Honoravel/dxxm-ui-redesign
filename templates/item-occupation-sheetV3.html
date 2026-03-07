@@ -1,0 +1,178 @@
+<form class="{{cssClass}} dxxm-v3-sheet occupation-sheet" autocomplete="off">
+    {{!-- Header: Icone, Nome, Fonte e Resumo de Pontos --}}
+    <section class="dxxm-group-icon">
+        <img class="profile" src="{{item.img}}" data-edit="img" data-tooltip="{{item.name}}" />
+    </section>
+
+    <section class="dxxm-group-title">
+        <input class="dxxm-title-input" name="name" type="text" value="{{item.name}}" placeholder="{{ localize 'CoC7.Name' }}" />
+    </section>
+
+    <section class="dxxm-group-subtitle">
+        <div class="dxxm-subtitle-row">
+            <input class="dxxm-subtitle-input" type="text" name="system.source" value="{{data.system.source}}" placeholder="{{ localize 'CoC7.Source' }}" />
+        </div>
+    </section>
+
+    <section class="dxxm-group-status">
+        <div class="dxxm-status-item" data-tooltip="{{localize 'CoC7.OccupationPoints'}}">
+            <i class="fa-solid fa-calculator"></i>
+            <span class="dxxm-status-text">{{occupationPointsString}}</span>
+        </div>
+        <a class="dxxm-tabs-toggle" data-tooltip="Alternar Menu">
+            <i class="fa-solid fa-sort"></i>
+        </a>
+    </section>
+
+    {{!-- Navegação por Abas --}}
+    <section class="dxxm-group-tabs">
+        <nav class="dxxm-v3-tabs tabs" data-group="primary">
+            <a class="item active" data-tab="description" data-tooltip="{{ localize 'CoC7.Description' }}">
+                <i class="fas fa-file-alt"></i>
+            </a>
+            {{#unless isOwned}}
+            <a class="item" data-tab="details" data-tooltip="{{ localize 'CoC7.Details' }}">
+                <i class="fa-solid fa-gears"></i>
+            </a>
+            {{/unless}}
+            <a class="item" data-tab="skills" data-tooltip="{{ localize 'CoC7.Skills' }}">
+                <i class="fa-solid fa-list-check"></i>
+            </a>
+            {{#if isKeeper}}
+            <a class="item keeper-only-tab" data-tab="keeper" data-tooltip="{{localize 'CoC7.GmNotes'}}">
+                <i class="fas fa-skull"></i>
+            </a>
+            {{/if}}
+        </nav>
+    </section>
+
+    {{!-- Corpo da Ficha --}}
+    <section class="dxxm-group-body">
+        
+        {{!-- Aba de Descrição --}}
+        <div class="tab description active" data-group="primary" data-tab="description">
+            <div class="item-properties">
+                <ol class="properties-list">
+                    {{#each itemProperties}}
+                    <li class="dxxm-property-pill">{{this}}</li>
+                    {{/each}}
+                </ol>
+            </div>
+            {{editor enrichedDescriptionValue target="system.description.value" engine="prosemirror" button=true owner=owner editable=editable}}
+        </div>
+
+        {{!-- Aba de Detalhes (Configuração de Pontos e Tipos) --}}
+        <div class="tab details" data-group="primary" data-tab="details">
+            <h3 class="dxxm-section-title">{{ localize "CoC7.OccupationType" }}</h3>
+            <div class="dxxm-icon-properties">
+                {{#each (array "classic" "lovecraftian" "modern" "pulp") as |type|}}
+                <label class="dxxm-property-button toggle-switch {{#if (lookup ../data.system.type type)}} switched-on {{/if}}">
+                    <input type="checkbox" name="system.type.{{type}}" {{checked (lookup ../data.system.type type)}} style="display:none;" />
+                    <span class="dxxm-button-label">{{localize (concat "CoC7." (capitalize type))}}</span>
+                </label>
+                {{/each}}
+            </div>
+
+            <h3 class="dxxm-section-title">{{ localize "CoC7.OccupationPoints" }}</h3>
+            <div class="dxxm-grid-points">
+                {{#each data.system.occupationSkillPoints as |char key|}}
+                <div class="dxxm-point-row {{#if char.selected}}active{{/if}}">
+                    <label class="dxxm-checkbox-label">
+                        <input type="checkbox" name="system.occupationSkillPoints.{{key}}.selected" {{checked char.selected}} />
+                        {{localize (concat "CHARAC." (upperCase key))}}
+                    </label>
+                    
+                    {{#if char.selected}}
+                    <div class="dxxm-point-controls">
+                        <label class="dxxm-opt-label">
+                            <input type="checkbox" name="system.occupationSkillPoints.{{key}}.optional" {{checked char.optional}} />
+                            {{ localize "CoC7.Optional" }}
+                        </label>
+                        <input type="text" class="dxxm-inline-input" name="system.occupationSkillPoints.{{key}}.multiplier" value="{{char.multiplier}}" data-dtype="Number" placeholder="x2" />
+                    </div>
+                    {{/if}}
+                </div>
+                {{/each}}
+            </div>
+
+            <h3 class="dxxm-section-title">{{ localize "CoC7.CoCIDFlag.keys.i.skill.credit-rating" }}</h3>
+            <div class="dxxm-form-row">
+                <div class="dxxm-input-group">
+                    <label>{{ localize 'CoC7.Minimum' }}</label>
+                    <input type="text" name="system.creditRating.min" value="{{data.system.creditRating.min}}" />
+                </div>
+                <div class="dxxm-input-group">
+                    <label>{{ localize 'CoC7.Maximum' }}</label>
+                    <input type="text" name="system.creditRating.max" value="{{data.system.creditRating.max}}" />
+                </div>
+            </div>
+        </div>
+
+        {{!-- Aba de Perícias --}}
+        <div class="tab skills" data-group="primary" data-tab="skills">
+            <div class="{{#unless isOwned}}droppable{{/unless}} dxxm-skills-container">
+                <h3 class="dxxm-section-title">{{ localize "CoC7.CommonSkills" }}</h3>
+                
+                {{#if skillListEmpty}}
+                    <p class="dxxm-warning">{{ localize "CoC7.EmptySkillList" }}</p>
+                {{/if}}
+
+                <ol class="dxxm-item-list">
+                    {{#each data.system.skills as |skill|}}
+                    <li class="dxxm-item" data-item-id="{{skill._id}}" data-cocid="{{skill.flags.CoC7.cocidFlag.id}}">
+                        <span class="dxxm-item-name">{{skill.name}} <small>({{skill.system.base}}%)</small></span>
+                        <div class="dxxm-item-controls">
+                            {{#unless ../isOwned}}
+                            <a class="item-control item-delete" title="{{localize 'CoC7.DeleteItem'}}"><i class="fas fa-trash"></i></a>
+                            {{/unless}}
+                        </div>
+                    </li>
+                    {{/each}}
+                </ol>
+
+                {{#unless isOwned}}
+                <h3 class="dxxm-section-title dxxm-flex-between">
+                    {{ localize "CoC7.OptionSkills" }}
+                    <a class="group-control add-group"><i class="fas fa-plus"></i></a>
+                </h3>
+
+                {{#each data.system.groups as |group i|}}
+                <div class="dxxm-skill-group droppable" data-group="{{i}}">
+                    <div class="dxxm-group-header">
+                        <label>{{ localize "CoC7.Choose" }}</label>
+                        <input type="text" name="system.groups.{{i}}.options" value="{{group.options}}" placeholder="0" />
+                        <a class="group-control remove-group"><i class="fas fa-minus"></i></a>
+                    </div>
+                    
+                    <ol class="dxxm-item-list">
+                        {{#each group.skills as |skill|}}
+                        <li class="dxxm-item" data-item-id="{{skill._id}}">
+                            <span class="dxxm-item-name">{{skill.name}} <small>({{skill.system.base}}%)</small></span>
+                            <a class="item-control group-item-delete"><i class="fas fa-trash"></i></a>
+                        </li>
+                        {{/each}}
+                    </ol>
+                </div>
+                {{/each}}
+
+                <h3 class="dxxm-section-title">{{ localize "CoC7.AdditionalSkills" }}</h3>
+                <div class="dxxm-form-row">
+                    <input type="text" class="dxxm-small-input" name="system.personal" value="{{data.system.personal}}" data-dtype="Number" />
+                    <input type="text" name="system.personalText" value="{{data.system.personalText}}" placeholder="{{ localize 'CoC7.PersonalSpecialityPlaceholder' }}" />
+                </div>
+                {{/unless}}
+            </div>
+        </div>
+
+        {{!-- Aba do Guardião --}}
+        {{#if isKeeper}}
+        <div class="tab keeper" data-group="primary" data-tab="keeper">
+            {{editor enrichedDescriptionKeeper target="system.description.keeper" engine="prosemirror" button=true owner=owner editable=editable}}
+        </div>
+        {{/if}}
+    </section>
+
+    <div class="scroll-indicator">
+        <i class="fas fa-chevron-down"></i>
+    </div>
+</form>

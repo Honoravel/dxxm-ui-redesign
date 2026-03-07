@@ -1,0 +1,78 @@
+/* ==========================================================================
+   STYLES/CITIZENS.CSS
+   ========================================================================== */
+
+.dxxm-window-citizens { background: transparent !important; box-shadow: none !important; border: none !important; backdrop-filter: none !important;}
+
+.dxxm-window-citizens .window-header {
+    background: #070509; border: 1px solid var(--color-cool-4); border-bottom: 1px solid var(--color-cool-4);
+    border-radius: 8px 8px 0 0; color: var(--color-light-1);
+}
+
+.dxxm-window-citizens .window-content {
+    color: var(--color-light-2); padding: 0px !important; overflow: hidden !important; 
+    display: flex; flex-direction: column; background: transparent !important; backdrop-filter: none !important;
+}
+
+.dxxm-citizens-container { display: flex; flex-direction: column; gap: 15px; height: 100%; }
+
+.citizens-header {
+    display: flex; align-items: center; gap: 15px; background: var(--color-cool-5-90);
+    border: 0px solid white; padding: 16px; border-left: 1px solid var(--color-cool-4);
+    border-right: 1px solid var(--color-cool-4); border-bottom: 1px solid var(--color-cool-4);
+    border-bottom-left-radius: 15px; border-bottom-right-radius: 15px; flex-shrink: 0;
+}
+
+.location-flag { width: 85px; height: 85px; object-fit: contain; flex-shrink: 0; }
+.citizens-nav-container { display: flex; flex-direction: column; gap: 8px; flex-grow: 1; overflow: hidden; }
+
+.citizens-hub-bar {
+    display: flex; justify-content: flex-start; align-items: center; gap: 10px;
+    overflow-x: auto; scrollbar-width: thin; padding-bottom: 4px;
+}
+
+.hub-tab {
+    background: var(--color-cool-5-50); border: 1px solid var(--color-light-5); color: var(--color-light-2);
+    padding: 4px 8px; border-radius: 8px; cursor: pointer; font-family: 'Modesto Condensed', serif;
+    font-size: 1.1rem; white-space: nowrap; transition: background-color 0.2s ease, border-color 0.2s ease;
+}
+
+.hub-tab:hover, .hub-tab.active { background: var(--color-warm-2); border-color: var(--color-light-3); color: var(--color-light-1); }
+
+/* NOVO: Estilo para abas ocultas pelo GM */
+.hub-tab.tab-hidden { opacity: 0.5; border-style: dashed !important; }
+
+.citizens-portrait-container { flex-grow: 1; overflow-y: auto; background: transparent; padding: 5px 5px; scrollbar-width: thin; pointer-events: auto; position: relative; }
+
+.citizens-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(110px, 1fr)); gap: 20px; justify-content: center; align-items: center; justify-items: center; min-height: 100%; }
+
+.citizen-portrait-wrapper { position: relative; width: max-content; max-width: 100%; cursor: grab; transition: transform 0.2s ease; pointer-events: auto; display: flex; justify-content: center; align-items: center; }
+.citizen-portrait-wrapper:active { cursor: grabbing; }
+.citizen-portrait-wrapper:hover { transform: scale(1.25); }
+
+.citizen-portrait-img { width: auto !important; height: auto !important; margin-left: 8px; max-width: 100%; max-height: 170px; aspect-ratio: auto !important; object-fit: contain; display: block; filter: drop-shadow(0 0 8px rgba(0,0,0,0.5)); transition: filter 0.3s ease; }
+
+.hidden-npc .citizen-portrait-img { filter: brightness(0.15) blur(6px) drop-shadow(0 0 8px rgba(0,0,0,0.5)); }
+
+.citizen-portrait-mask { position: absolute; top: 0; left: 0; width: 100%; height: 100%; object-fit: contain; pointer-events: none; z-index: 2; }
+
+.empty-state { grid-column: 1 / -1; text-align: center; color: var(--color-light-5); padding: 30px; font-size: 1.1rem; pointer-events: auto; }
+
+.citizens-opinion-indicator {
+    background: var(--color-cool-5-90); border: 1px solid var(--color-cool-4); border-radius: 15px;
+    padding: 15px 15px; flex-shrink: 0; font-family: 'Modesto Condensed', serif; color: var(--color-light-5); font-size: 1.5rem;
+}
+
+.opinion-bar { display: flex; align-items: center; gap: 15px; }
+.opinion-container { flex-grow: 1; display: flex; flex-direction: column; gap: 10px; }
+.opinion-track { width: 100%; height: 8px; background: linear-gradient(to right, #8b0000, #555, #006400); border-radius: 4px; position: relative; margin-top: 5px; }
+
+.opinion-labels { display: flex; justify-content: space-between; font-size: 0.8rem; color: var(--color-light-4); font-family: 'Modesto Condensed', serif; text-transform: uppercase; pointer-events: none; }
+.opinion-labels span { flex: 1; text-align: center; line-height: 1.1; }
+.opinion-labels span:first-child { text-align: left; }
+.opinion-labels span:last-child { text-align: right; }
+
+.opinion-marker {
+    position: absolute; top: -12px; width: 0; height: 0; background: transparent; border-left: 8px solid transparent;
+    border-right: 8px solid transparent; border-top: 14px solid white; filter: drop-shadow(0 2px 2px rgba(0,0,0,0.8)); transform: translateX(-50%); pointer-events: none; 
+}

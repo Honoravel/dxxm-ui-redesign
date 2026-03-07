@@ -1,0 +1,86 @@
+<form class="{{cssClass}} dxxm-v3-sheet" autocomplete="off">
+    <section class="dxxm-group-icon">
+            <img src="{{item.img}}" data-edit="img" data-tooltip="{{item.name}}"/>
+    </section>
+
+    <section class="dxxm-group-title">
+        <input type="hidden" name="name" value="{{item.name}}" />
+        <input class="dxxm-title-input" type="text" name="system.skillName" value="{{data.system.skillName}}" placeholder="{{localize 'CoC7.Name'}}" />
+    </section>
+
+    <section class="dxxm-group-subtitle">
+        {{#if isSpecialized}}
+            {{#if canModifySpec}}
+                <input class="dxxm-subtitle-input" type="text" name="system.specialization" value="{{data.system.specialization}}" placeholder="{{localize 'CoC7.SkillSpecial'}}" />
+            {{else}}
+                <div class="dxxm-subtitle-readonly">{{data.system.specialization}}</div>
+            {{/if}}
+        {{/if}}
+    </section>
+
+    <section class="dxxm-group-status">
+            <div class="dxxm-status-item" data-tooltip="{{#if hadNonCharacterOwner}}{{localize 'CoC7.Value'}}{{else}}{{localize 'CoC7.SkillBase'}}{{/if}}">
+                <i class="fas fa-percent"></i>
+                {{#if hadNonCharacterOwner}}
+                    <input type="text" name="system.value" value="{{data.system.value}}" data-dtype="Number" class="dxxm-inline-input" />
+                {{else}}
+                    <input type="text" name="system.base" value="{{data.system.base}}" data-dtype="Number" class="dxxm-inline-input" />
+                {{/if}}
+            </div>
+                
+        <a class="dxxm-tabs-toggle" data-tooltip="Alternar Menu">
+            <i class="fa-solid fa-sort"></i>
+        </a>
+    </section>
+
+    <section class="dxxm-group-tabs">
+        <nav class="dxxm-v3-tabs tabs" data-group="primary">
+            <a class="item active" data-tab="description" data-tooltip="{{ localize 'CoC7.Description' }}"><i class="fas fa-file-alt"></i></a>
+            <a class="item" data-tab="properties" data-tooltip="{{ localize 'CoC7.Properties' }}"><i class="fa-solid fa-sliders"></i></a>
+            <a class="item" data-tab="settings" data-tooltip="{{ localize 'CoC7.Eras' }}"><i class="fas fa-hourglass-half"></i></a>
+            {{#if isKeeper}}
+            <a class="item" data-tab="keeper" data-tooltip="{{ localize 'CoC7.GmNotes' }}"><i class="fas fa-skull"></i></a>
+            {{/if}}
+        </nav>
+    </section>
+
+    <section class="dxxm-group-body">
+        <div class="tab description active" data-group="primary" data-tab="description">
+            {{editor enrichedDescriptionValue target="system.description.value" engine="prosemirror" button=true owner=owner editable=editable}}
+        </div>
+
+        <div class="tab properties" data-group="primary" data-tab="properties">
+            <h3 class="dxxm-section-title">{{ localize "CoC7.Properties" }}</h3>
+            <div class="dxxm-icon-properties skill-attributes" data-set="properties">
+                {{#each _properties as |property key|}}
+                    <span class="dxxm-property-button toggle-switch {{#if property.isEnabled}} switched-on {{/if}}" data-property="{{property.id}}">
+                        <span class="dxxm-button-label">{{localize property.name}}</span>
+                    </span>
+                {{/each}}
+            </div>
+        </div>
+
+        <div class="tab settings" data-group="primary" data-tab="settings">
+            {{#unless hasOwner}}
+                <h3 class="dxxm-section-title">{{ localize "CoC7.Eras" }}</h3>
+                <div class="dxxm-era-toggles skill-attributes" data-set="eras">
+                    {{#each _eras as |era key|}}
+                        <span class="dxxm-era-pill toggle-switch {{#if era.isEnabled}} switched-on {{/if}}" data-property="{{era.id}}">
+                            {{era.name}}
+                        </span>
+                    {{/each}}
+                </div>
+            {{/unless}}
+        </div>
+
+        {{#if isKeeper}}
+        <div class="tab keeper" data-group="primary" data-tab="keeper">
+            {{editor enrichedDescriptionKeeper target="system.description.keeper" engine="prosemirror" button=true owner=owner editable=editable}}
+        </div>
+        {{/if}}
+    </section>
+
+    <div class="scroll-indicator">
+        <i class="fas fa-chevron-down"></i>
+    </div>
+</form>

@@ -1,0 +1,111 @@
+<form class="{{cssClass}} dxxm-v3-sheet" autocomplete="off">
+<section class="dxxm-group-icon">
+<img src="{{item.img}}" data-edit="img" data-tooltip="{{item.name}}"/>
+</section>
+
+<section class="dxxm-group-title">
+    <input name="name" type="text" value="{{item.name}}" placeholder="{{localize 'CoC7.Name'}}" />
+</section>
+
+<section class="dxxm-group-status">
+    <div class="dxxm-status-item" data-tooltip="{{localize 'CoC7.Weight'}}">
+        <i class="fas fa-weight-hanging"></i>
+        <input type="text" name="system.weight" value="{{item.system.weight}}" data-dtype="Number" placeholder="0" />
+    </div>
+
+    <div class="dxxm-status-item" data-tooltip="{{localize 'CoC7.Quantity'}}">
+        <i class="fas fa-box"></i>
+        <input type="text" name="system.quantity" value="{{item.system.quantity}}" data-dtype="Number" placeholder="0" />
+    </div>
+
+    <div class="dxxm-status-item" data-tooltip="{{localize 'CoC7.Price'}} ({{worldEra}})">
+        <i class="fas {{priceIcon}}"></i>
+        <input type="text" value="{{lookup item.system.price worldEra}}" placeholder="0" readonly />
+    </div>
+
+    <a class="dxxm-tabs-toggle" data-tooltip="{{localize 'dxxm.ToggleTabs'}}">
+        <i class="fa-solid fa-sort"></i>
+    </a>
+</section>
+
+<section class="dxxm-group-tabs">
+    <nav class="dxxm-v3-tabs tabs" data-group="primary">
+        <a class="item active" data-tab="description" data-tooltip="{{localize 'CoC7.Description'}}"><i class="fas fa-file-alt"></i></a>
+        <a class="item" data-tab="costs" data-tooltip="{{localize 'dxxm.Costs'}}"><i class="fa-solid fa-sliders"></i></a>
+        <a class="item" data-tab="eras" data-tooltip="{{ localize 'CoC7.Eras' }}"><i class="fas fa-hourglass-half"></i></a>
+        <a class="item" data-tab="effects" data-tooltip="{{localize 'CoC7.Effects'}}"><i class="fas fa-wand-magic-sparkles"></i></a>
+        {{#if isKeeper}}
+        <a class="item" data-tab="keeper" data-tooltip="{{localize 'CoC7.KeeperNotes'}}"><i class="fas fa-skull"></i></a>
+        {{/if}}
+    </nav>
+</section>
+
+<section class="dxxm-group-body">
+    <div class="tab description active" data-group="primary" data-tab="description">
+        {{editor item.system.description.value target="system.description.value" button=true owner=owner editable=editable engine="prosemirror"}}
+    </div>
+
+    <div class="tab costs" data-group="primary" data-tab="costs">
+        <div class="dxxm-currency-selector">
+            <a class="toggle-switch {{#if (eq priceIcon 'fa-dollar-sign')}}active{{/if}}" data-action="set-currency" data-icon="fa-dollar-sign" data-tooltip="{{localize 'dxxm.CurrencyDollar'}}">
+                <i class="fas fa-dollar-sign"></i>
+            </a>
+            <a class="toggle-switch {{#if (eq priceIcon 'fa-pound-sign')}}active{{/if}}" data-action="set-currency" data-icon="fa-pound-sign" data-tooltip="{{localize 'dxxm.CurrencyPound'}}">
+                <i class="fas fa-pound-sign"></i>
+            </a>
+            <a class="toggle-switch {{#if (eq priceIcon 'fa-brazilian-real-sign')}}active{{/if}}" data-action="set-currency" data-icon="fa-brazilian-real-sign" data-tooltip="{{localize 'dxxm.CurrencyReal'}}">
+                <i class="fas fa-brazilian-real-sign"></i>
+            </a>
+            <a class="toggle-switch {{#if (eq priceIcon 'fa-coins')}}active{{/if}}" data-action="set-currency" data-icon="fa-coins" data-tooltip="{{localize 'dxxm.CurrencyCoins'}}">
+                <i class="fas fa-coins"></i>
+            </a>
+            <a class="toggle-switch {{#if (eq priceIcon 'fa-tag')}}active{{/if}}" data-action="set-currency" data-icon="fa-tag" data-tooltip="{{localize 'dxxm.CurrencyTag'}}">
+                <i class="fas fa-tag"></i>
+            </a>
+        </div>
+
+        <div class="dxxm-costs-container">
+            <div class="dxxm-prices-grid">
+                {{#each _eras as |era key|}}
+                    {{#if era.isEnabled}}
+                        <div class="dxxm-price-row">
+                            <label>{{localize era.name}}:</label>
+                            <div class="dxxm-price-input-wrapper">
+                                <input type="text" name="system.price.{{era.id}}" value="{{era.price}}" placeholder="0" data-dtype="String" />
+                            </div>
+                        </div>
+                    {{/if}}
+                {{/each}}
+            </div>
+        </div>
+    </div>
+
+    <div class="tab eras" data-group="primary" data-tab="eras">
+        <h3 class="dxxm-section-title">{{localize 'CoC7.Eras'}}</h3>
+        <div class="dxxm-era-toggles">
+            {{#each _eras as |era key|}}
+                <span class="dxxm-era-pill toggle-switch {{#if era.isEnabled}} switched-on {{/if}}" 
+                      data-property="{{era.id}}" 
+                      data-tooltip="{{era.name}}">
+                    {{era.name}}
+                </span>
+            {{/each}}
+        </div>
+    </div>
+
+    <div class="tab effects" data-group="primary" data-tab="effects">
+        {{> "systems/CoC7/templates/common/active-effects.hbs"}}
+    </div>
+
+    {{#if isKeeper}}
+    <div class="tab keeper" data-group="primary" data-tab="keeper">
+        {{editor item.system.description.keeper target="system.description.keeper" button=true owner=owner editable=editable engine="prosemirror"}}
+    </div>
+    {{/if}}
+</section>
+
+<div class="scroll-indicator">
+    <i class="fas fa-chevron-down"></i>
+</div>
+
+</form>

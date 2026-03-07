@@ -1,0 +1,39 @@
+<div class="dxxm-soundboard-container">
+    <div class="evidence-main-scroll-area" style="--container-cols: {{config.containerCols}};">
+        {{#each containers}}
+            <section class="evidence-container-slots">
+                <div class="slots-header" data-container="{{this.id}}">
+                    <span class="slots-header-name">
+                        {{#if this.name}}{{this.name}}{{else}}...{{/if}}
+                    </span>
+                    <div class="slots-header-volume">
+                        <input type="range" class="container-volume-slider" 
+                               min="0" max="1" step="0.05" value="{{this.volume}}" 
+                               data-container-id="{{this.id}}">
+                        <span class="volume-display" id="volume-display-{{this.id}}">{{this.volumeDisplay}}%</span>
+                    </div>
+                </div>
+                <div class="slots-body">
+                    <div class="evidence-grid" style="--item-cols: {{../config.itemCols}};">
+                        {{#each this.slots}}
+                            <div class="evidence-slot {{#if this.isActive}}is-active{{/if}}" 
+                                 data-slot="{{this.id}}" 
+                                 data-tooltip="{{#if this.data.hasItem}}{{this.data.name}}{{else}}Slot Vazio{{/if}}">
+                                
+                                {{#if this.data.hasItem}}
+                                    {{#if this.data.isIcon}}
+                                        <i class="{{this.data.img}} evidence-icon"></i>
+                                    {{else}}
+                                        <img src="{{this.data.img}}" class="evidence-img">
+                                    {{/if}}
+                                {{else}}
+                                    <i class="fas fa-music evidence-icon" style="opacity: 0.6;"></i>
+                                {{/if}}
+                            </div>
+                        {{/each}}
+                    </div>
+                </div>
+            </section>
+        {{/each}}
+    </div>
+</div>

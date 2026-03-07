@@ -1,0 +1,61 @@
+{{!-- 
+    Container principal: Gere o grid de grupos.
+    A classe is-gm permite que o CSS aplique estilos exclusivos ao Mestre com alta especificidade.
+--}}
+<div class="dxxm-group-evidence-grid {{#if isGM}}is-gm{{/if}}" 
+     style="--container-cols: {{@root.config.containerCols}};">
+    
+    {{#each containers}}
+        <section class="group-grid" data-container-id="{{this.id}}">
+            
+            {{!-- Cabeçalho do Grupo: Suporta edição inline e feedback de visibilidade --}}
+            <header class="group-grid-header dxxm-editable-header {{#if this.hidden}}is-hidden-gm{{/if}}" 
+                    data-container="{{this.id}}"
+                    {{#if @root.isGM}}data-tooltip="GM: Clique para editar o nome | Shift+Direito: Ocultar/Exibir"{{/if}}>
+                
+                {{!-- Contentor do Rótulo: Ocupa todo o espaço para permitir edição total da barra --}}
+                <div class="group-grid-header-label">
+                    {{#if @root.isGM}}
+                        {{!-- O Mestre edita diretamente via input --}}
+                        <input type="text" 
+                               value="{{this.name}}" 
+                               data-container="{{this.id}}"
+                               spellcheck="false">
+                    {{else}}
+                        {{!-- O Jogador vê o nome ou reticências se o grupo estiver oculto --}}
+                        {{#if this.hidden}} ... {{else}} {{this.name}} {{/if}}
+                    {{/if}}
+                </div>
+            </header>
+
+            {{!-- Grid de Slots Unitários --}}
+            <div class="group-grid-slots" style="--item-cols: {{@root.config.itemCols}};">
+                {{#each this.slots}}
+                    <div class="group-grid-slots-unitary {{#if this.data.hasItem}}has-item{{/if}} {{#if this.isActive}}is-active{{/if}}" 
+                         data-slot="{{this.id}}"
+                         {{!-- Segurança: O tooltip só mostra o nome se o item estiver visível ou se for o GM --}}
+                         data-tooltip="{{#if (and this.data.hasItem (or (not this.data.hidden) @root.isGM))}}{{this.data.name}}{{else}}Vazio{{/if}}"
+                         data-tooltip-direction="DOWN">
+                        
+                        {{#if (and this.data.hasItem (or (not this.data.hidden) @root.isGM))}}
+                            {{!-- Conteúdo Visível: draggable="false" evita conflitos no Drag & Drop --}}
+                            {{#if this.data.faIcon}}
+                                <i class="{{this.data.faIcon}} item-icon {{#if this.data.hidden}}is-hidden-gm{{/if}}" draggable="false"></i>
+                            {{else}}
+                                <img src="{{this.data.img}}" alt="{{this.data.name}}" class="item-img {{#if this.data.hidden}}is-hidden-gm{{/if}}" draggable="false">
+                            {{/if}}
+                        {{else if this.data.hasItem}}
+                            {{!-- Placeholder para itens ocultos (Jogador) --}}
+                            <i class="far fa-circle-question placeholder" draggable="false"></i>
+                        {{else}}
+                            {{!-- Slot realmente vazio --}}
+                            <i class="far fa-circle-question placeholder" draggable="false"></i>
+                        {{/if}}
+
+                    </div>
+                {{/each}}
+            </div>
+
+        </section>
+    {{/each}}
+</div>

@@ -1,0 +1,116 @@
+<form class="{{cssClass}} dxxm-v3-sheet dxxm-spell-v3" autocomplete="off">
+  
+  <section class="dxxm-group-icon">
+    <img src="{{item.img}}" data-edit="img" data-tooltip="{{item.name}}"/>
+  </section>
+
+  <section class="dxxm-group-title">
+    <input name="name" type="text" value="{{item.name}}" placeholder="Título do Tomo" />
+  </section>
+
+  <section class="dxxm-group-subtitle" data-tooltip="{{localize 'CoC7.Source'}}">
+      <input type="text" name="system.source" value="{{data.system.source}}" placeholder="{{localize 'CoC7.Source'}}" />
+  </section>
+
+  <section class="dxxm-group-statuspell">
+    <section class="dxxm-group-status">
+      <div class="dxxm-status-values">
+        {{#if isKeeper}}
+          <div class="dxxm-status-item" data-tooltip="{{localize 'CoC7.SpellCastingTime'}}">
+            <i class="fas fa-hourglass-start"></i>
+            <input type="text" name="system.castingTime" value="{{data.system.castingTime}}" placeholder="{{localize 'CoC7.SpellCastingTime'}}" />
+          </div>
+        {{/if}}
+      </div>
+
+      <a class="dxxm-tabs-toggle" data-tooltip="Alternar Abas">
+        <i class="fa-solid fa-sort"></i>
+      </a>
+    </section>
+
+    <div class="dxxm-spell-actions">
+      {{#if canCast}}
+        <button type="button" id="cast-spell" class="dxxm-btn-cast">
+         {{localize "CoC7.Cast"}} 
+        </button>
+      {{/if}}
+    </div>
+  </section>
+
+  <section class="dxxm-group-tabs">
+    <nav class="dxxm-v3-tabs tabs" data-group="primary">
+      <a class="item active" data-tab="description" data-tooltip="{{localize 'CoC7.Description'}}"><i class="fa-solid fa-wand-magic-sparkles"></i></a>
+      <a class="item" data-tab="details" data-tooltip="{{localize 'CoC7.Details'}}"><i class="fa-solid fa-sliders"></i></a>
+      {{#if isKeeper}}
+        <a class="item" data-tab="keeper" data-tooltip="{{localize 'CoC7.GmNotes'}}"><i class="fas fa-skull"></i></a>
+      {{/if}}
+    </nav>
+  </section>
+
+  <section class="dxxm-group-body">
+    
+    <div class="tab description active" data-group="primary" data-tab="description">
+      {{editor enrichedDescriptionValue target="system.description.value" engine="prosemirror" button=true owner=owner editable=editable}}
+    </div>
+
+    <div class="tab details" data-group="primary" data-tab="details">
+      <div class="dxxm-details-grid">
+        
+        <div class="dxxm-spell-types-grid">
+          <label class="dxxm-section-label">{{localize "CoC7.SpellType"}}</label>
+          <div class="dxxm-type-selector">
+            {{#each formattedSpellTypes as |ptype|}}
+              <label class="dxxm-type-btn {{#if ptype.checked}}active{{/if}}">
+                <input type="checkbox" name="system.type.{{ptype.id}}" {{checked ptype.checked}} style="display:none">
+                {{ptype.label}}
+              </label>
+            {{/each}}
+          </div>
+        </div>
+
+        <hr class="dxxm-divider">
+
+        <div class="dxxm-costs-grid">
+          <div class="dxxm-cost-item">
+            <label>{{localize "CoC7.SanityCost"}}</label>
+            <input type="text" name="system.costs.sanity" value="{{data.system.costs.sanity}}" />
+          </div>
+          <div class="dxxm-cost-item">
+            <label>{{localize "CoC7.MagicPointsCost"}}</label>
+            <input type="text" name="system.costs.magicPoints" value="{{data.system.costs.magicPoints}}" />
+          </div>
+          <div class="dxxm-cost-item">
+            <label>{{localize "CoC7.HitPointsCost"}}</label>
+            <input type="text" name="system.costs.hitPoints" value="{{data.system.costs.hitPoints}}" />
+          </div>
+          <div class="dxxm-cost-item">
+            <label>{{localize "CoC7.PowerCost"}}</label>
+            <input type="text" name="system.costs.power" value="{{data.system.costs.power}}" />
+          </div>
+        </div>
+
+        <div class="dxxm-other-costs">
+          <label>{{localize "CoC7.OtherCosts"}}</label>
+          <input type="text" name="system.costs.others" value="{{data.system.costs.others}}" />
+        </div>
+
+        <div class="dxxm-alt-names">
+          <label>{{localize "CoC7.AlternativeNames"}}</label>
+          {{editor enrichedDescriptionAlternativeNames target="system.description.alternativeNames" engine="prosemirror" button=true owner=owner editable=editable}}
+        </div>
+      </div>
+    </div>
+
+    {{#if isKeeper}}
+    <div class="tab keeper" data-group="primary" data-tab="keeper">
+      {{editor enrichedDescriptionKeeper target="system.description.keeper" engine="prosemirror" button=true owner=owner editable=editable}}
+    </div>
+    {{/if}}
+
+  </section>
+
+  <div class="scroll-indicator">
+    <i class="fas fa-chevron-down"></i>
+  </div>
+
+</form>
