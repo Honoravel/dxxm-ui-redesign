@@ -51,9 +51,9 @@
 
         <div class="tab properties" data-group="primary" data-tab="properties">
             <h3 class="dxxm-section-title">{{ localize "CoC7.Properties" }}</h3>
-            <div class="dxxm-icon-properties skill-attributes" data-set="properties">
+            <div class="background-toggle skill-attributes" data-set="properties">
                 {{#each _properties as |property key|}}
-                    <span class="dxxm-property-button toggle-switch {{#if property.isEnabled}} switched-on {{/if}}" data-property="{{property.id}}">
+                    <span class="dxxm-property-button toggle-switch {{#if property.isEnabled}} switch-active {{/if}}" data-property="{{property.id}}">
                         <span class="dxxm-button-label">{{localize property.name}}</span>
                     </span>
                 {{/each}}
@@ -63,9 +63,9 @@
         <div class="tab settings" data-group="primary" data-tab="settings">
             {{#unless hasOwner}}
                 <h3 class="dxxm-section-title">{{ localize "CoC7.Eras" }}</h3>
-                <div class="dxxm-era-toggles skill-attributes" data-set="eras">
+                <div class="background-toggle skill-attributes" data-set="eras">
                     {{#each _eras as |era key|}}
-                        <span class="dxxm-era-pill toggle-switch {{#if era.isEnabled}} switched-on {{/if}}" data-property="{{era.id}}">
+                        <span class="dxxm-era-pill toggle-switch {{#if era.isEnabled}} switch-active {{/if}}" data-property="{{era.id}}">
                             {{era.name}}
                         </span>
                     {{/each}}

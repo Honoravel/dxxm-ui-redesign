@@ -78,7 +78,7 @@ export function registerOccupationSheetV3() {
             // Injeção do Ícone no Cabeçalho da Janela
             const windowHeaderTitle = this.element[0]?.querySelector('.window-header .window-title');
             if (windowHeaderTitle) {
-                const iconClass = this.dxxmHeaderIcon || "fa-solid fa-briefcase";
+                const iconClass = this.dxxmHeaderIcon || "fa-solid fa-graduation-cap";
                 windowHeaderTitle.innerHTML = `<i class="${iconClass} dxxm-header-icon" style="margin-left: 5px;"></i>${this.item.name}`;
             }
 

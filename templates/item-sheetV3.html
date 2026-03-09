@@ -47,19 +47,19 @@
 
     <div class="tab costs" data-group="primary" data-tab="costs">
         <div class="dxxm-currency-selector">
-            <a class="toggle-switch {{#if (eq priceIcon 'fa-dollar-sign')}}active{{/if}}" data-action="set-currency" data-icon="fa-dollar-sign" data-tooltip="{{localize 'dxxm.CurrencyDollar'}}">
+            <a class="toggle-switch {{#if (eq priceIcon 'fa-dollar-sign')}}switch-active{{/if}}" data-action="set-currency" data-icon="fa-dollar-sign" data-tooltip="{{localize 'dxxm.CurrencyDollar'}}">
                 <i class="fas fa-dollar-sign"></i>
             </a>
-            <a class="toggle-switch {{#if (eq priceIcon 'fa-pound-sign')}}active{{/if}}" data-action="set-currency" data-icon="fa-pound-sign" data-tooltip="{{localize 'dxxm.CurrencyPound'}}">
+            <a class="toggle-switch {{#if (eq priceIcon 'fa-pound-sign')}}switch-active{{/if}}" data-action="set-currency" data-icon="fa-pound-sign" data-tooltip="{{localize 'dxxm.CurrencyPound'}}">
                 <i class="fas fa-pound-sign"></i>
             </a>
-            <a class="toggle-switch {{#if (eq priceIcon 'fa-brazilian-real-sign')}}active{{/if}}" data-action="set-currency" data-icon="fa-brazilian-real-sign" data-tooltip="{{localize 'dxxm.CurrencyReal'}}">
+            <a class="toggle-switch {{#if (eq priceIcon 'fa-brazilian-real-sign')}}switch-active{{/if}}" data-action="set-currency" data-icon="fa-brazilian-real-sign" data-tooltip="{{localize 'dxxm.CurrencyReal'}}">
                 <i class="fas fa-brazilian-real-sign"></i>
             </a>
-            <a class="toggle-switch {{#if (eq priceIcon 'fa-coins')}}active{{/if}}" data-action="set-currency" data-icon="fa-coins" data-tooltip="{{localize 'dxxm.CurrencyCoins'}}">
+            <a class="toggle-switch {{#if (eq priceIcon 'fa-coins')}}switch-active{{/if}}" data-action="set-currency" data-icon="fa-coins" data-tooltip="{{localize 'dxxm.CurrencyCoins'}}">
                 <i class="fas fa-coins"></i>
             </a>
-            <a class="toggle-switch {{#if (eq priceIcon 'fa-tag')}}active{{/if}}" data-action="set-currency" data-icon="fa-tag" data-tooltip="{{localize 'dxxm.CurrencyTag'}}">
+            <a class="toggle-switch {{#if (eq priceIcon 'fa-tag')}}switch-active{{/if}}" data-action="set-currency" data-icon="fa-tag" data-tooltip="{{localize 'dxxm.CurrencyTag'}}">
                 <i class="fas fa-tag"></i>
             </a>
         </div>
@@ -82,9 +82,9 @@
 
     <div class="tab eras" data-group="primary" data-tab="eras">
         <h3 class="dxxm-section-title">{{localize 'CoC7.Eras'}}</h3>
-        <div class="dxxm-era-toggles">
+        <div class="background-toggle">
             {{#each _eras as |era key|}}
-                <span class="dxxm-era-pill toggle-switch {{#if era.isEnabled}} switched-on {{/if}}" 
+                <span class="dxxm-era-pill toggle-switch {{#if era.isEnabled}} switch-active {{/if}}" 
                       data-property="{{era.id}}" 
                       data-tooltip="{{era.name}}">
                     {{era.name}}

@@ -49,6 +49,21 @@
 .dxxm-group-body .editor .editor-edit { background: var(--color-cool-4); color: var(--color-light-4); border-radius: 8px; padding: 5px 10px; top: 10px; right: 10px; transition: all 0.2s ease; }
 .dxxm-group-body .editor .editor-edit:hover { color: var(--color-warm-2); text-shadow: none; }
 
+/*TABS-TITLE*/.dxxm-v3-sheet .dxxm-section-title {all: unset; color: var(--color-light-1); font-family: 'Modesto Condensed', serif; font-size: 2rem; font-weight: bold; font-style: italic; text-align: center; margin-bottom: 10px;}
+/*BTN-BCKG*/.dxxm-v3-sheet .background-toggle {all: unset; display: flex; flex-direction: column; justify-content: center; gap: 10px}
+/*BTN-SWITCH*/.dxxm-v3-sheet .toggle-switch {all: unset; display: flex; align-items: center; background: var(--color-cool-4);  color: var(--color-light-4); border-radius: 5px; gap: 8px; padding: 5px; font-family: 'Modesto Condensed', serif; font-size: 1.2rem; cursor: var(--cursor-pointer);}
+/*BTN-ACTIVE/HOVER*/.dxxm-v3-sheet .switch-active, .dxxm-v3-sheet .toggle-switch:hover {background: var(--color-warm-2); color: var(--color-light-3); box-shadow: none;}
+
+:is(.wrapper-property) input { background: transparent; color: var(--color-light-1); border: none; border-bottom: 1px solid var(--color-light-4); display: flex; flex-direction: column; justify-content: center; width: 100%; padding: 5px; padding: 0; margin: 0px; font-family: 'Modesto Condensed', serif; font-size: 1.2rem; text-align: center; }
+
+/*group*/.dxxm-group {background: var(--color-cool-4);  color: var(--color-light-4); border-left: 4px solid var(--color-light-4); border-radius: 8px; display: flex; flex-direction: column; justify-content: center; align-items: center; width: 100%; padding-top: 5px;}
+/*group-input*/.dxxm-group input { background: transparent; color: var(--color-light-1); border: none; border-bottom: 1px solid var(--color-light-4); display: flex; flex-direction: column; justify-content: center; width: 100%; padding: 5px; padding: 0; margin: 0px; border-radius: 10px; font-family: 'Modesto Condensed', serif; font-size: 1.2rem; text-align: center; }
+
+
+.dxxm-v3-sheet .wrapper-row-center {all: unset; display: flex; flex-direction: row; justify-content: flex-start; align-items: center;}
+.dxxm-v3-sheet .wrapper-column-center  {all: unset; display: flex; flex-direction: column; justify-content: flex-start; align-items: center;}
+/*GRID-BTN-BCKG*/.dxxm-v3-sheet .wrapper-grid-template, .dxxm-v3-sheet .wrapper-credit-rating { all: unset; display: grid; grid-template-columns: repeat(2, 1fr); gap: 8px; margin-bottom: 10px;}
+
 .scroll-indicator { background: var(--color-cool-4); color: var(--color-light-4); border: 1px solid rgba(255,255,255,0.1); border-radius: 20px; opacity: 0; padding: 4px 12px; position: absolute; bottom: 22px; left: 50%; transform: translateX(-50%); z-index: 100; font-size: 1rem; transition: opacity 0.3s ease; pointer-events: none; }
 .dxxm-book-progress ~ .scroll-indicator { background: var(--color-cool-4); color: var(--color-light-4); border: 1px solid rgba(255,255,255,0.1); border-radius: 20px; opacity: 0; padding: 4px 12px; position: absolute; bottom: 72px; left: 50%; transform: translateX(-50%); z-index: 100; font-size: 1rem; transition: opacity 0.3s ease; pointer-events: none; }
 .scroll-indicator.visible { opacity: 1; animation: bounce 2s infinite; }
@@ -62,13 +77,8 @@
 .dxxm-group-body .dxxm-price-row input { width: 50px; }
 .dxxm-group-body .dxxm-costs-container .dxxm-group-body .tab.active label { padding: 0; margin-bottom: 10px; font-family: 'Modesto Condensed', serif; font-size: 1.2rem; }
 
-/*TABS-TITLE*/.dxxm-v3-sheet .dxxm-section-title {all: unset; color: var(--color-light-1); font-family: 'Modesto Condensed', serif; font-size: 2rem; font-weight: bold; font-style: italic; text-align: center; margin-bottom: 10px;}
-/*BTN-BCKG*/.dxxm-v3-sheet .skill-attributes, .dxxm-v3-sheet .dxxm-era-toggles {all: unset; display: flex; flex-direction: column; justify-content: center; gap: 10px}
-/*BTN-SWITCH*/.dxxm-v3-sheet .toggle-switch {all: unset; display: flex; align-items: center; background: var(--color-cool-4);  color: var(--color-light-4); border-radius: 5px; gap: 8px; padding: 5px; font-family: 'Modesto Condensed', serif; font-size: 1.2rem; cursor: var(--cursor-pointer);}
-/*BTN-ACTIVE/HOVER*/.dxxm-v3-sheet .switched-on, .dxxm-v3-sheet .toggle-switch.active, .dxxm-v3-sheet .toggle-switch:hover {background: var(--color-warm-2); color: var(--color-light-3); box-shadow: none;}
-
 .dxxm-group-body .tab.active input { color: var(--color-light-1); font-family: 'Modesto Condensed', serif; font-size: 1.2rem; font-weight: bold; text-align: center; }
-.dxxm-group-body .tab.active input:focus, .dxxm-group-body .tab.active input:hover { border: 1px solid var(--color-warm-2); border-radius: 5px; box-shadow: 0 0 5px var(--color-warm-2); }
+/**/.dxxm-group-body .tab.active input:focus, .dxxm-group-body .tab.active input:hover { border-bottom: 1px solid var(--color-warm-2); border-radius: 5px; box-shadow: 0 0 5px var(--color-warm-2); }
 
 .dxxm-group-body .effects-list { gap: 15px; padding: 0; }
 .dxxm-group-body .effects-list .items-header { background: var(--color-cool-4); color: var(--color-light-3); border: 0; border-radius: 5px; display: flex; justify-content: space-around; align-items: baseline; padding: 5px; margin: 0; font-family: 'Modesto Condensed', serif; font-size: 1rem; }
@@ -97,6 +107,8 @@
 .dxxm-book-v3 .dxxm-field input { background: transparent; color: var(--color-light-1); border: none; border-bottom: 1px solid var(--color-light-4); display: flex; flex-direction: column; justify-content: center; width: 100%; padding: 5px; padding: 0; margin: 0px; font-family: 'Modesto Condensed', serif; font-size: 1.2rem; text-align: center; }
 .dxxm-book-v3 .dxxm-field input:focus, .dxxm-field input:hover { border-bottom: 1px solid var(--color-warm-2) !important; box-shadow: none !important; }
 .dxxm-book-v3 .dxxm-field label { display: flex; justify-content: center; align-items: center; width: 100%; padding: 5px; margin-bottom: 0px; font-family: 'Modesto Condensed', serif; font-size: 1.2rem; }
+
+
 
 .dxxm-book-v3 .dxxm-detail-difficulty { background: var(--color-cool-4); color: var(--color-light-4); border-left: 4px solid var(--color-light-5); border-radius: 8px; display: flex; width: 100%; margin-top: 10px; }
 .dxxm-book-v3 .dxxm-detail-difficulty .dxxm-field-row { display: flex; justify-content: center; align-items: center; gap: 10px; width: 100%; height: 100%; padding: 5px; font-family: 'Modesto Condensed', serif; font-size: 1.2rem; font-style: italic; text-align: center; }
