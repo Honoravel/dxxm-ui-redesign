@@ -1,4 +1,4 @@
-/* scripts/evidence.js - v17 (Ultra-Robust Hook System) */
+/* scripts/evidence.js - v18 (Ultra-Robust Hook System) */
 import { DXXMUtils } from "./utils.js";
 
 const { ApplicationV2, HandlebarsApplicationMixin } = foundry.applications.api;
@@ -40,8 +40,12 @@ export class DXXMEvidence extends HandlebarsApplicationMixin(ApplicationV2) {
     _parseFAIcon(path) {
         if (!path || typeof path !== "string") return null;
         const fileName = path.split('/').pop().split('.').shift();
-        if (fileName.startsWith("fa_")) {
-            return fileName.replace("fa_solid_fa_", "fas fa-").replace("fa_regular_fa_", "far fa-").replace("fa_brands_fa_", "fab fa-").replace(/_/g, "-");
+        const match = fileName.match(/^(fas|far|fab|fa)[_-](?:solid[_-]fa[_-]|regular[_-]fa[_-]|brands[_-]fa[_-]|fa[_-])?([\w-]+)/);
+        
+        if (match) {
+            const type = match[1] === "fa" ? "fas" : match[1];
+            const iconName = match[2].replace(/_/g, "-");
+            return `${type} fa-${iconName}`;
         }
         return null;
     }

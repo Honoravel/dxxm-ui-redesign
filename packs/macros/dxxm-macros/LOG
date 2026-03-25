@@ -1,0 +1,2 @@
+2026/03/25-08:12:13.210374 744eb816c6c0 Delete type=3 #1
+2026/03/25-08:20:51.233058 744ea990e6c0 Manual compaction at level-0 from '!macros!9gZYx82qPLF7kBp9' @ 72057594037927935 : 1 .. '!macros!9gZYx82qPLF7kBp9' @ 0 : 0; will stop at (end)

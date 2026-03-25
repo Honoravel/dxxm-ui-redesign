@@ -1,6 +1,6 @@
 /* scripts/citizens.js */
 import { DXXMUtils } from "./utils.js";
-import { DXXMInvestigation } from "./investigation.js"; // Importado para integração com a nova janela
+import { DXXMInvestigation } from "./investigation.js";
 
 const { ApplicationV2, HandlebarsApplicationMixin } = foundry.applications.api;
 
@@ -40,10 +40,119 @@ export class DXXMCitizens extends HandlebarsApplicationMixin(ApplicationV2) {
         return super.close(options);
     }
 
+    async _getCitizensData() {
+        try {
+            return game.settings.get('ui-redesign', 'citizensData') || { locations: [] };
+        } catch (e) {
+            return { locations: [] };
+        }
+    }
+
+    async _saveCitizensData(data) {
+        if (game.user.isGM) {
+            await game.settings.set('ui-redesign', 'citizensData', data);
+        }
+    }
+
+    // Função auxiliar para abrir o Dialog de Edição/Exclusão
+    _openEditDialog(type, id, currentName) {
+        new Dialog({
+            title: `Gerenciar ${type === 'page' ? 'Local' : 'Grupo'}`,
+            content: `
+                <div class="form-group" style="margin-bottom: 10px;">
+                    <label>Nome:</label>
+                    <input type="text" id="dxxm-dialog-name" value="${currentName}" autofocus>
+                </div>
+                <hr>
+                <p style="color: darkred; font-size: 0.9em;">Aviso: Excluir um Local apagará seus Grupos. Excluir um Grupo apagará a organização de seus tokens.</p>
+            `,
+            buttons: {
+                save: {
+                    icon: '<i class="fas fa-save"></i>',
+                    label: "Salvar",
+                    callback: async (html) => {
+                        const newName = html.find('#dxxm-dialog-name').val();
+                        if (newName && newName.trim() !== "") {
+                            let data = await this._getCitizensData();
+                            if (type === 'page') {
+                                let loc = data.locations.find(l => l.id === id);
+                                if (loc) loc.name = newName;
+                            } else if (type === 'group') {
+                                let loc = data.locations.find(l => l.id === this.activePageId);
+                                let grp = loc?.groups.find(g => g.id === id);
+                                if (grp) grp.name = newName;
+                            }
+                            await this._saveCitizensData(data);
+                            this.render(true);
+                        }
+                    }
+                },
+                delete: {
+                    icon: '<i class="fas fa-trash"></i>',
+                    label: "Excluir",
+                    callback: async () => {
+                        let data = await this._getCitizensData();
+                        if (type === 'page') {
+                            data.locations = data.locations.filter(l => l.id !== id);
+                            if (this.activePageId === id) {
+                                this.activePageId = data.locations.length > 0 ? data.locations[0].id : null;
+                                this.activeGroupId = null;
+                            }
+                        } else if (type === 'group') {
+                            let loc = data.locations.find(l => l.id === this.activePageId);
+                            if (loc) {
+                                loc.groups = loc.groups.filter(g => g.id !== id);
+                                if (this.activeGroupId === id) {
+                                    this.activeGroupId = loc.groups.length > 0 ? loc.groups[0].id : null;
+                                }
+                            }
+                        }
+                        await this._saveCitizensData(data);
+                        this.render(true);
+                    }
+                },
+                cancel: {
+                    icon: '<i class="fas fa-times"></i>',
+                    label: "Cancelar"
+                }
+            },
+            default: "save"
+        }).render(true);
+    }
+
     _onRender(context, options) {
         super._onRender(context, options);
 
-        const journal = game.journal.getName("Banco de Personagens");
+        // Alterar Imagem do Local (FilePicker) - GM
+        const locationFlagImg = this.element.querySelector('.location-flag');
+        if (locationFlagImg && game.user.isGM) {
+            locationFlagImg.style.cursor = 'pointer';
+            locationFlagImg.title = "Clique com o botão direito para alterar a imagem do Local";
+            
+            locationFlagImg.addEventListener('contextmenu', async (e) => {
+                e.preventDefault();
+                if (!this.activePageId) {
+                    ui.notifications.warn("Crie um Local primeiro antes de alterar a imagem.");
+                    return;
+                }
+
+                let data = await this._getCitizensData();
+                let loc = data.locations.find(l => l.id === this.activePageId);
+                let currentPath = loc?.locationFlag || "icons/svg/d20-grey.svg";
+
+                new FilePicker({
+                    type: "image",
+                    current: currentPath,
+                    callback: async (path) => {
+                        if (loc) {
+                            loc.locationFlag = path;
+                            await this._saveCitizensData(data);
+                            this.render(true);
+                        }
+                    }
+                }).browse();
+            });
+        }
 
         // Eventos para as abas de páginas (Locais)
         const pageTabs = this.element.querySelectorAll('.page-tab');
@@ -54,22 +163,30 @@ export class DXXMCitizens extends HandlebarsApplicationMixin(ApplicationV2) {
                 this.render(true);
             });
 
-            // Ocultar/Revelar Página (Shift + Clique Direito) - Apenas GM
             tab.addEventListener('contextmenu', async (event) => {
-                if (game.user.isGM && event.shiftKey) {
-                    event.preventDefault();
-                    const pageId = event.currentTarget.dataset.page;
-                    const page = journal?.pages.get(pageId);
-                    if (page) {
-                        const isHidden = page.getFlag('ui-redesign', 'isHidden') || false;
-                        await page.setFlag('ui-redesign', 'isHidden', !isHidden);
+                if (!game.user.isGM) return;
+                event.preventDefault();
+                
+                const pageId = event.currentTarget.dataset.page;
+                
+                // Shift + Clique Direito = Ocultar/Revelar
+                if (event.shiftKey) {
+                    let data = await this._getCitizensData();
+                    let loc = data.locations.find(l => l.id === pageId);
+                    if (loc) {
+                        loc.isHidden = !loc.isHidden;
+                        await this._saveCitizensData(data);
                         this.render(true);
                     }
+                } else {
+                    // Clique Direito = Dialog
+                    const currentName = tab.innerText.trim();
+                    this._openEditDialog('page', pageId, currentName);
                 }
             });
         });
 
-        // Eventos para as abas de grupos (Sub-categorias)
+        // Eventos para as abas de grupos
         const groupTabs = this.element.querySelectorAll('.group-tab');
         groupTabs.forEach(tab => {
             tab.addEventListener('click', (event) => {
@@ -77,23 +194,62 @@ export class DXXMCitizens extends HandlebarsApplicationMixin(ApplicationV2) {
                 this.render(true);
             });
 
-            // Ocultar/Revelar Grupo (Shift + Clique Direito) - Apenas GM
             tab.addEventListener('contextmenu', async (event) => {
-                if (game.user.isGM && event.shiftKey) {
-                    event.preventDefault();
-                    const groupId = event.currentTarget.dataset.group;
-                    const page = journal?.pages.get(this.activePageId);
-                    if (page) {
-                        const hiddenGroups = page.getFlag('ui-redesign', 'hiddenGroups') || {};
-                        hiddenGroups[groupId] = !hiddenGroups[groupId];
-                        await page.setFlag('ui-redesign', 'hiddenGroups', hiddenGroups);
+                if (!game.user.isGM) return;
+                event.preventDefault();
+                
+                const groupId = event.currentTarget.dataset.group;
+
+                // Shift + Clique Direito = Ocultar/Revelar
+                if (event.shiftKey) {
+                    let data = await this._getCitizensData();
+                    let loc = data.locations.find(l => l.id === this.activePageId);
+                    let grp = loc?.groups.find(g => g.id === groupId);
+                    if (grp) {
+                        grp.isHidden = !grp.isHidden;
+                        await this._saveCitizensData(data);
                         this.render(true);
                     }
+                } else {
+                    // Clique Direito = Dialog
+                    const currentName = tab.innerText.trim();
+                    this._openEditDialog('group', groupId, currentName);
                 }
             });
         });
 
-        // Lógica da Opinião Pública (Apenas GM)
+        // Adicionar Local (GM)
+        const addPageBtn = this.element.querySelector('.add-page');
+        if (addPageBtn) {
+            addPageBtn.addEventListener('click', async () => {
+                let data = await this._getCitizensData();
+                const newLoc = { id: foundry.utils.randomID(), name: "Novo Local", isHidden: false, publicOpinion: 50, groups: [] };
+                data.locations.push(newLoc);
+                this.activePageId = newLoc.id;
+                this.activeGroupId = null;
+                await this._saveCitizensData(data);
+                this.render(true);
+            });
+        }
+
+        // Adicionar Grupo (GM)
+        const addGroupBtn = this.element.querySelector('.add-group');
+        if (addGroupBtn) {
+            addGroupBtn.addEventListener('click', async () => {
+                if (!this.activePageId) return;
+                let data = await this._getCitizensData();
+                let loc = data.locations.find(l => l.id === this.activePageId);
+                if (loc) {
+                    const newGrp = { id: foundry.utils.randomID(), name: "Novo Grupo", isHidden: false, npcs: [] };
+                    loc.groups.push(newGrp);
+                    this.activeGroupId = newGrp.id;
+                    await this._saveCitizensData(data);
+                    this.render(true);
+                }
+            });
+        }
+
+        // Lógica da Opinião Pública (GM)
         if (game.user.isGM) {
             const opinionTrack = this.element.querySelector('.opinion-track');
             if (opinionTrack) {
@@ -110,8 +266,12 @@ export class DXXMCitizens extends HandlebarsApplicationMixin(ApplicationV2) {
                     if (marker) marker.dataset.tooltip = tooltipText;
                     if (textLabel) textLabel.innerText = tooltipText;
                     if (save) {
-                        const page = journal?.pages.get(this.activePageId);
-                        if (page) await page.setFlag('ui-redesign', 'publicOpinion', percentage);
+                        let data = await this._getCitizensData();
+                        let loc = data.locations.find(l => l.id === this.activePageId);
+                        if (loc) {
+                            loc.publicOpinion = percentage;
+                            await this._saveCitizensData(data);
+                        }
                     }
                 };
                 opinionTrack.addEventListener('mousedown', (e) => {
@@ -133,72 +293,153 @@ export class DXXMCitizens extends HandlebarsApplicationMixin(ApplicationV2) {
             }
         }
 
-        // Lógica de Retratos (Clique para Investigação, Arraste e Ocultação)
         const container = this.element.querySelector('.citizens-portrait-container');
+        
+        // Drag and Drop de Atores da aba lateral (GM)
+        if (game.user.isGM && container) {
+            container.addEventListener('dragover', e => e.preventDefault());
+            container.addEventListener('drop', async e => {
+                e.preventDefault();
+                try {
+                    const dataText = e.dataTransfer.getData('text/plain');
+                    if (!dataText || !this.activePageId || !this.activeGroupId) return;
+                    
+                    const dropData = JSON.parse(dataText);
+                    if (dropData.type !== 'Actor') return;
+                    
+                    const actor = await fromUuid(dropData.uuid);
+                    if (!actor) return;
+
+                    let data = await this._getCitizensData();
+                    let loc = data.locations.find(l => l.id === this.activePageId);
+                    let grp = loc?.groups.find(g => g.id === this.activeGroupId);
+                    
+                    if (grp) {
+                        const containerRect = container.getBoundingClientRect();
+                        const x = e.clientX - containerRect.left + container.scrollLeft - 40;
+                        const y = e.clientY - containerRect.top + container.scrollTop - 40;
+
+                        if (!grp.npcs) grp.npcs = [];
+                        if (!grp.npcs.find(n => n.actorId === actor.id)) {
+                            grp.npcs.push({ actorId: actor.id, x: x, y: y, isHidden: false });
+                            await this._saveCitizensData(data);
+                            this.render(true);
+                        }
+                    }
+                } catch(err) {
+                    console.error("DXXM | Erro ao soltar Ator na Agenda:", err);
+                }
+            });
+        }
+
+        // Interação com Retratos
         const wrappers = this.element.querySelectorAll('.citizen-portrait-wrapper');
         wrappers.forEach(wrapper => {
             
-            // Clique para abrir Investigação e FECHAR Citizens
-            wrapper.addEventListener('click', (event) => {
-                if (event.button !== 0) return; // Apenas clique esquerdo
+            // Clique Esquerdo: Abre Investigação ou Remove (se GM usar ALT)
+            wrapper.addEventListener('click', async (event) => {
+                if (event.button !== 0) return;
                 
+                // Trava para impedir a abertura ao soltar do arrasto
+                if (wrapper.dataset.dragged === "true") return;
+
                 const npcId = wrapper.dataset.npcId;
-                const npcData = context.activeNPCs.find(n => n.id === npcId);
+
+                // Remover NPC (Alt + Clique Esquerdo) - GM
+                if (game.user.isGM && event.altKey) {
+                    event.preventDefault();
+                    let data = await this._getCitizensData();
+                    let loc = data.locations.find(l => l.id === this.activePageId);
+                    let grp = loc?.groups.find(g => g.id === this.activeGroupId);
+                    if (grp) {
+                        grp.npcs = grp.npcs.filter(n => n.actorId !== npcId);
+                        await this._saveCitizensData(data);
+                        this.render(true);
+                    }
+                    return;
+                }
                 
-                // --- NOVO: Captura o nome do grupo atual para enviar ao Investigation ---
+                // Abrir Investigação
+                const npcData = context.activeNPCs.find(n => n.id === npcId);
                 const currentGroup = context.groups.find(g => g.id === this.activeGroupId);
                 const groupName = currentGroup ? currentGroup.name : "Geral";
                 
-                // Abre a investigação apenas se o NPC não estiver marcado como oculto
                 if (npcData && !npcData.isHidden) {
-                    // ALTERADO: Passando o groupName como 4º parâmetro
                     DXXMInvestigation.openForNPC(npcData.name, npcData.img, npcData.mask, groupName);
-                    this.close(); // Fecha a Agenda de Contatos
+                    this.close();
                 }
             });
 
-            // Clique Direito para Ocultação (GM)
+            // Clique Direito: Ocultar/Revelar (Shift + Clique Direito) - GM
             wrapper.addEventListener('contextmenu', async (e) => {
                 if (game.user.isGM && e.shiftKey) {
                     e.preventDefault(); e.stopPropagation();
                     const npcId = wrapper.dataset.npcId;
-                    const page = journal?.pages.get(this.activePageId);
-                    if (npcId && page) {
-                        const currentHidden = page.getFlag('ui-redesign', `npcHidden.${this.activeGroupId}.${npcId}`) || false;
-                        await page.setFlag('ui-redesign', `npcHidden.${this.activeGroupId}.${npcId}`, !currentHidden);
+                    let data = await this._getCitizensData();
+                    let loc = data.locations.find(l => l.id === this.activePageId);
+                    let grp = loc?.groups.find(g => g.id === this.activeGroupId);
+                    let npc = grp?.npcs.find(n => n.actorId === npcId);
+                    
+                    if (npc) {
+                        npc.isHidden = !npc.isHidden;
+                        await this._saveCitizensData(data);
                         this.render(true);
                     }
                 }
             });
 
-            // Arraste de NPC (GM)
+            // Arrastar NPC pela tela (Shift + Mouse Down) - GM
             wrapper.addEventListener('mousedown', (e) => {
                 if (!game.user.isGM || e.button !== 0 || !e.shiftKey) return;
                 const containerRect = container.getBoundingClientRect();
                 const wrapperRect = wrapper.getBoundingClientRect();
+                
+                wrapper.dataset.dragged = "false"; // Reseta a flag de segurança inicial
+                
                 wrapper.style.position = 'absolute';
                 wrapper.style.left = `${wrapperRect.left - containerRect.left + container.scrollLeft}px`;
                 wrapper.style.top = `${wrapperRect.top - containerRect.top + container.scrollTop}px`;
                 wrapper.style.zIndex = 1000;
                 wrapper.style.transition = 'none';
+                
                 let offsetX = e.clientX - wrapperRect.left;
                 let offsetY = e.clientY - wrapperRect.top;
                 let isDragging = false;
+                
                 const onMove = (mv) => {
                     isDragging = true;
+                    wrapper.dataset.dragged = "true"; // Sinaliza o elemento como sendo arrastado
                     wrapper.style.left = `${mv.clientX - containerRect.left + container.scrollLeft - offsetX}px`;
                     wrapper.style.top = `${mv.clientY - containerRect.top + container.scrollTop - offsetY}px`;
                 };
+                
                 const onUp = async (up) => {
                     document.removeEventListener('mousemove', onMove);
                     document.removeEventListener('mouseup', onUp);
                     wrapper.style.zIndex = 10;
                     wrapper.style.transition = 'transform 0.2s ease';
+                    
                     if (isDragging) {
-                        const page = journal?.pages.get(this.activePageId);
-                        if (page) await page.setFlag('ui-redesign', `npcPositions.${this.activeGroupId}.${wrapper.dataset.npcId}`, { x: parseFloat(wrapper.style.left), y: parseFloat(wrapper.style.top) });
+                        // Salva os dados se ocorreu movimento
+                        let data = await this._getCitizensData();
+                        let loc = data.locations.find(l => l.id === this.activePageId);
+                        let grp = loc?.groups.find(g => g.id === this.activeGroupId);
+                        let npc = grp?.npcs.find(n => n.actorId === wrapper.dataset.npcId);
+                        if (npc) {
+                            npc.x = parseFloat(wrapper.style.left);
+                            npc.y = parseFloat(wrapper.style.top);
+                            await this._saveCitizensData(data);
+                        }
+                        
+                        // Remove a flag após um pequeno intervalo para bloquear o engate de 'click'
+                        setTimeout(() => {
+                            wrapper.dataset.dragged = "false";
+                        }, 50);
+                    } else {
+                        wrapper.dataset.dragged = "false";
                     }
                 };
+                
                 document.addEventListener('mousemove', onMove);
                 document.addEventListener('mouseup', onUp);
             });
@@ -206,7 +447,7 @@ export class DXXMCitizens extends HandlebarsApplicationMixin(ApplicationV2) {
     }
 
     async _prepareContext(options) {
-        const journal = game.journal.getName("Banco de Personagens");
+        let data = await this._getCitizensData();
         let pages = [];
         let groups = [];
         let activeNPCs = [];
@@ -214,83 +455,72 @@ export class DXXMCitizens extends HandlebarsApplicationMixin(ApplicationV2) {
         let publicOpinion = 50; 
         let opinionTooltip = "0%";
 
-        if (journal && journal.pages.size > 0) {
-            pages = journal.pages.contents.map(p => ({
-                id: p.id,
-                name: p.name,
+        if (data.locations && data.locations.length > 0) {
+            pages = data.locations.map(l => ({
+                id: l.id,
+                name: l.name,
                 active: false,
-                isHidden: p.getFlag('ui-redesign', 'isHidden') || false
+                isHidden: l.isHidden || false
             }));
 
             if (!game.user.isGM) pages = pages.filter(p => !p.isHidden);
 
-            if (!this.activePageId || !pages.find(p => p.id === this.activePageId)) {
-                this.activePageId = pages[0]?.id;
-            }
-
-            const activePageObj = pages.find(p => p.id === this.activePageId);
-            if (activePageObj) activePageObj.active = true;
-
-            const activePage = journal.pages.get(this.activePageId);
-            
-            if (activePage) {
-                publicOpinion = activePage.getFlag('ui-redesign', 'publicOpinion') ?? 50;
-                const opinionValue = Math.round((publicOpinion - 50) * 2);
-                opinionTooltip = `${opinionValue > 0 ? '+' : ''}${opinionValue}%`;
-
-                const tempDiv = document.createElement("div");
-                tempDiv.innerHTML = activePage.text.content;
-                const firstImg = tempDiv.querySelector('img');
-                if (firstImg) { locationFlag = firstImg.getAttribute('src'); firstImg.remove(); }
-
-                tempDiv.querySelectorAll('p, br, h1, h2, h3, h4, h5, h6').forEach(el => el.prepend('\n'));
-                tempDiv.querySelectorAll('h1').forEach(h1 => { h1.prepend('[[[H1_START]]]'); h1.append('[[[H1_END]]]'); });
-
-                let fullText = tempDiv.innerText;
-                let lines = fullText.split('\n').map(l => l.trim());
-                let firstIdx = lines.findIndex(l => l.length > 0);
-                if (firstIdx !== -1 && !locationFlag && lines[firstIdx].match(/\.(png|webp|jpg|jpeg|gif|svg)$/i)) {
-                    locationFlag = lines[firstIdx];
-                    lines.splice(firstIdx, 1);
-                    fullText = lines.join('\n');
+            if (pages.length > 0) {
+                if (!this.activePageId || !pages.find(p => p.id === this.activePageId)) {
+                    this.activePageId = pages[0].id;
                 }
-                
-                let textToParse = "";
-                if (fullText.includes('[[[H1_START]]]')) {
-                    const parts = fullText.split('[[[H1_START]]]');
-                    let groupIdCounter = 0;
-                    const hiddenGroups = activePage.getFlag('ui-redesign', 'hiddenGroups') || {};
-                    parts.forEach((part) => {
-                        if (part.trim() === '' || !part.includes('[[[H1_END]]]')) return;
-                        const splitPart = part.split('[[[H1_END]]]');
-                        const groupId = `group-${groupIdCounter++}`;
-                        groups.push({ id: groupId, name: splitPart[0].trim(), text: splitPart[1] || '', active: false, isHidden: hiddenGroups[groupId] || false });
-                    });
+                const activePageObj = pages.find(p => p.id === this.activePageId);
+                if (activePageObj) activePageObj.active = true;
 
-                    if (!game.user.isGM) groups = groups.filter(g => !g.isHidden);
+                const activeLoc = data.locations.find(l => l.id === this.activePageId);
+                if (activeLoc) {
+                    publicOpinion = activeLoc.publicOpinion ?? 50;
+                    const opinionValue = Math.round((publicOpinion - 50) * 2);
+                    opinionTooltip = `${opinionValue > 0 ? '+' : ''}${opinionValue}%`;
+                    locationFlag = activeLoc.locationFlag || null;
 
-                    if (groups.length > 0) {
-                        if (!this.activeGroupId || !groups.find(g => g.id === this.activeGroupId)) this.activeGroupId = groups[0].id;
-                        const activeGroupInfo = groups.find(g => g.id === this.activeGroupId);
-                        if (activeGroupInfo) { activeGroupInfo.active = true; textToParse = activeGroupInfo.text; }
+                    if (activeLoc.groups) {
+                        groups = activeLoc.groups.map(g => ({
+                            id: g.id,
+                            name: g.name,
+                            active: false,
+                            isHidden: g.isHidden || false
+                        }));
+
+                        if (!game.user.isGM) groups = groups.filter(g => !g.isHidden);
+
+                        if (groups.length > 0) {
+                            if (!this.activeGroupId || !groups.find(g => g.id === this.activeGroupId)) {
+                                this.activeGroupId = groups[0].id;
+                            }
+                            const activeGroupObj = groups.find(g => g.id === this.activeGroupId);
+                            if (activeGroupObj) activeGroupObj.active = true;
+
+                            const activeGrp = activeLoc.groups.find(g => g.id === this.activeGroupId);
+                            if (activeGrp && activeGrp.npcs) {
+                                activeNPCs = activeGrp.npcs.map(npc => {
+                                    const actor = game.actors.get(npc.actorId);
+                                    if (!actor) return null;
+                                    const isHidden = npc.isHidden || false;
+                                    
+                                    return {
+                                        name: actor.name,
+                                        nickname: actor.getFlag('ui-redesign', 'nickname') || "",
+                                        displayName: isHidden ? "Desconhecido" : actor.name,
+                                        img: actor.img,
+                                        mask: actor.getFlag('ui-redesign', 'mask') || null,
+                                        id: npc.actorId,
+                                        style: `position: absolute; left: ${npc.x}px; top: ${npc.y}px; z-index: 10;`,
+                                        isHidden: isHidden
+                                    };
+                                }).filter(n => n !== null);
+                            }
+                        }
                     }
-                } else { textToParse = fullText; }
-
-                if (textToParse) {
-                    const regex = /([^|\n]+)\|([^|\n]+)\|([^|\n]+)(?:\|([^|\n]+))?/g;
-                    const matches = [...textToParse.matchAll(regex)];
-                    const savedPositions = activePage?.getFlag('ui-redesign', `npcPositions.${this.activeGroupId}`) || {};
-                    const savedHidden = activePage?.getFlag('ui-redesign', `npcHidden.${this.activeGroupId}`) || {};
-                    activeNPCs = matches.map((match, index) => {
-                        const name = match[1]?.trim();
-                        const npcId = `npc_${index}_${name.replace(/[^a-z0-9]/gi, '_').toLowerCase()}`;
-                        const pos = savedPositions[npcId];
-                        const isHidden = savedHidden[npcId] || false;
-                        return { name, nickname: match[2]?.trim(), displayName: isHidden ? "Desconhecido" : name, img: match[3]?.trim(), mask: match[4]?.trim(), id: npcId, style: pos ? `position: absolute; left: ${pos.x}px; top: ${pos.y}px; z-index: 10;` : '', isHidden };
-                    });
                 }
             }
         }
+        
         return { pages, groups, activeNPCs, locationFlag, publicOpinion, opinionTooltip, isGM: game.user.isGM };
     }
 }

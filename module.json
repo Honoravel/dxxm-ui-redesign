@@ -2,7 +2,7 @@
   "id": "ui-redesign",
   "title": "Investigative UI Redesign",
   "description": "Sistema de interface personalizada para RPG de investigação com foco em colecionáveis, inventário coletivo e censo de NPCs.",
-  "version": "1.22.0",
+  "version": "1.23.1",
   "authors": [
     {
       "name": "DXXM",
@@ -24,7 +24,7 @@
     "styles/soundboard.css",
     "styles/item-v3.css"
   ],
-"languages": [
+  "languages": [
     {
       "lang": "en",
       "name": "English",
@@ -34,6 +34,15 @@
       "lang": "pt-BR",
       "name": "Português (Brasil)",
       "path": "lang/pt-BR.json"
+    }
+  ],
+  "packs": [
+    {
+      "name": "dxxm-macros",
+      "label": "DXXM Macros",
+      "path": "packs/macros",
+      "type": "Macro",
+      "system": "CoC7"
     }
   ],
   "flags": {

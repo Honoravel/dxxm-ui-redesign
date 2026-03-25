@@ -4,56 +4,78 @@ import { DXXMUtils } from "./utils.js";
 const { ApplicationV2, HandlebarsApplicationMixin } = foundry.applications.api;
 
 export class DXXMSoundboard extends HandlebarsApplicationMixin(ApplicationV2) {
+    static activeSounds = new Map();
+    static editingSlots = new Set();
+
     constructor(options = {}) {
+        options.position = { width: "auto", height: "auto" }; 
         const savedPosition = DXXMUtils.getWindowPosition('soundboard-pos');
-        if (savedPosition) options.position = foundry.utils.mergeObject(options.position || {}, savedPosition);
+        if (savedPosition) {
+            options.position.top = savedPosition.top;
+            options.position.left = savedPosition.left;
+        }
         super(options);
         
         this.prefix = "soundboard";
         this.gridConfig = game.settings.get('ui-redesign', `${this.prefix}-grid-config`) || { containerCols: 1, itemCols: 3, itemRows: 1, preloadAudio: false };
         this.containers = game.settings.get('ui-redesign', `${this.prefix}-containers`) || [{ id: foundry.utils.randomID(), volume: 1.0, name: "..." }];
         this.slotsData = game.settings.get('ui-redesign', `${this.prefix}-slots-data`) || {};
-        
-        this.activeSounds = new Map();
+
+        // Registrar ouvinte de socket para pré-carregamento nos clientes
+        if (!game.user.isGM) {
+            game.socket.on('module.ui-redesign', (data) => {
+                if (data.action === "preloadSounds" && data.sources) {
+                    data.sources.forEach(src => foundry.audio.AudioHelper.preloadSound(src));
+                }
+            });
+        }
     }
 
     static DEFAULT_OPTIONS = {
         id: "dxxm-soundboard-app",
         classes: ["dxxm-window-soundboard"],
         tag: "section",
+        position: { width: "auto", height: "auto" },
         window: { 
             icon: "fas fa-music",
             title: "Soundboard", 
-            resizable: true,
-            controls: [{ icon: "fas fa-layer-group", label: "Grades", action: "configureGrid", align: "header" }]
+            resizable: false,
+            controls: [
+                { icon: "fas fa-download", label: "Pré-carregar para Todos", action: "forcePreloadAll", align: "header" },
+                { icon: "fas fa-layer-group", label: "Grades", action: "configureGrid", align: "header" }
+            ]
         }
     };
 
     static PARTS = { main: { template: "modules/ui-redesign/templates/soundboard.html" } };
+
+    async render(options = {}, renderOptions = {}) {
+        if (!game.user.isGM) {
+            ui.notifications.warn("Você não tem permissão para acessar o Soundboard.");
+            return this;
+        }
+        return super.render(options, renderOptions);
+    }
 
     async close(options = {}) {
         await DXXMUtils.saveWindowPosition('soundboard-pos', this.position);
         return super.close(options);
     }
 
-    /**
-     * GERENCIAMENTO DE SOM
-     */
     _stopSound(slotId) {
-        if (this.activeSounds.has(slotId)) {
-            this.activeSounds.get(slotId).stop(); 
-            this.activeSounds.delete(slotId); 
-            // Remove a classe visual de "tocando"
+        if (DXXMSoundboard.activeSounds.has(slotId)) {
+            DXXMSoundboard.activeSounds.get(slotId).stop(); 
+            DXXMSoundboard.activeSounds.delete(slotId); 
             this.element?.querySelector(`[data-slot="${slotId}"]`)?.classList.remove('is-active'); 
         }
     }
 
     async _handleLeftClick(event, slotId) {
+        if (!game.user.isGM) return;
         const slotData = this.slotsData[slotId];
         if (!slotData?.hasItem) return;
 
-        // Se já estiver tocando, o clique esquerdo para o som (Toggle)
-        if (this.activeSounds.has(slotId)) return this._stopSound(slotId);
+        if (DXXMSoundboard.activeSounds.has(slotId)) return this._stopSound(slotId);
 
         if (this.gridConfig.preloadAudio) await foundry.audio.AudioHelper.preloadSound(slotData.src);
 
@@ -63,18 +85,21 @@ export class DXXMSoundboard extends HandlebarsApplicationMixin(ApplicationV2) {
         
         const sound = await foundry.audio.AudioHelper.play({
             src: slotData.src, 
-            volume: (slotData.volume || 1.0) * (container?.volume || 1.0), 
-            loop: !!slotData.loop
+            volume: (slotData.volume ?? 1.0) * (container?.volume ?? 1.0), 
+            loop: !!slotData.loop,
+            channel: slotData.channel || "environment"
         }, true);
         
         if (sound) {
-            this.activeSounds.set(slotId, sound);
+            DXXMSoundboard.activeSounds.set(slotId, sound);
             sound.on("end", () => this._stopSound(slotId));
         }
     }
 
     async _handleRightClick(event, slotId) {
-        if (!game.user.isGM) return;
+        if (!game.user.isGM || DXXMSoundboard.editingSlots.has(slotId)) return;
+        
+        DXXMSoundboard.editingSlots.add(slotId);
         const slotData = this.slotsData[slotId] || { hasItem: false };
         
         const dialogContent = `
@@ -82,29 +107,43 @@ export class DXXMSoundboard extends HandlebarsApplicationMixin(ApplicationV2) {
                 <div class="form-group"><label>Nome do Áudio:</label><input type="text" name="name" value="${slotData.name || ''}"></div>
                 <div class="form-group"><label>Ficheiro:</label><input type="text" name="src" value="${slotData.src || ''}"></div>
                 <div class="form-group"><label>Ícone (ex: fas fa-ghost):</label><input type="text" name="img" value="${slotData.img || ''}"></div>
-                <div class="form-group"><label>Volume:</label><input type="number" name="volume" value="${slotData.volume || 1.0}" step="0.1" min="0" max="1"></div>
+                <div class="form-group"><label>Volume:</label><input type="number" name="volume" value="${slotData.volume ?? 1.0}" step="0.1" min="0" max="1"></div>
+                <div class="form-group">
+                    <label>Canal:</label>
+                    <select name="channel">
+                        <option value="environment" ${slotData.channel === 'environment' ? 'selected' : ''}>Ambiente</option>
+                        <option value="music" ${slotData.channel === 'music' ? 'selected' : ''}>Música</option>
+                        <option value="interface" ${slotData.channel === 'interface' ? 'selected' : ''}>Interface</option>
+                    </select>
+                </div>
                 <div class="form-group">
                     <label><input type="checkbox" name="loop" ${slotData.loop ? 'checked' : ''}> Loop</label>
                 </div>
             </form>`;
 
-        const result = await foundry.applications.api.DialogV2.wait({
-            window: { title: "Configurar Áudio", width: 400 },
-            content: dialogContent,
-            buttons: [
-                { action: "save", label: "Salvar", icon: "fas fa-save", default: true, callback: (e, b) => new FormDataExtended(b.form).object },
-                { action: "delete", label: "Excluir", icon: "fas fa-trash", callback: () => "delete" }
-            ]
-        });
+        try {
+            const result = await foundry.applications.api.DialogV2.wait({
+                window: { title: `Configurar Áudio: ${slotId}`, width: 400 },
+                content: dialogContent,
+                buttons: [
+                    { action: "save", label: "Salvar", icon: "fas fa-save", default: true, callback: (e, b) => new FormDataExtended(b.form).object },
+                    { action: "delete", label: "Excluir", icon: "fas fa-trash", callback: () => "delete" }
+                ]
+            });
 
-        if (result === "delete") { 
-            delete this.slotsData[slotId]; 
-        } else if (result) { 
-            this.slotsData[slotId] = { ...slotData, hasItem: true, ...result }; 
+            if (result === "delete") { 
+                delete this.slotsData[slotId]; 
+            } else if (result) { 
+                this.slotsData[slotId] = { ...slotData, hasItem: true, ...result }; 
+            }
+
+            if (result) {
+                await game.settings.set('ui-redesign', `${this.prefix}-slots-data`, this.slotsData);
+                this.render(true);
+            }
+        } finally {
+            DXXMSoundboard.editingSlots.delete(slotId);
         }
-
-        await game.settings.set('ui-redesign', `${this.prefix}-slots-data`, this.slotsData);
-        this.render(true);
     }
 
     async _handleHeaderRename(event, containerId) {
@@ -118,19 +157,15 @@ export class DXXMSoundboard extends HandlebarsApplicationMixin(ApplicationV2) {
         }
     }
 
-    /**
-     * CONTROLES DE VOLUME
-     */
     _onContainerVolumeInput(event) {
         const slider = event.currentTarget;
         const vol = parseFloat(slider.value);
         const containerId = slider.dataset.containerId;
         this.element.querySelector(`#volume-display-${containerId}`).innerText = `${Math.round(vol * 100)}%`;
 
-        // Atualiza o volume de todos os sons ativos deste grupo em tempo real
-        for (let [slotId, sound] of this.activeSounds.entries()) {
+        for (let [slotId, sound] of DXXMSoundboard.activeSounds.entries()) {
             if (slotId.startsWith(containerId + "-")) {
-                sound.volume = (this.slotsData[slotId].volume || 1.0) * vol;
+                sound.volume = (this.slotsData[slotId].volume ?? 1.0) * vol;
             }
         }
     }
@@ -147,7 +182,6 @@ export class DXXMSoundboard extends HandlebarsApplicationMixin(ApplicationV2) {
     _onRender(context, options) {
         super._onRender(context, options);
 
-        // GridManager cuidando dos eventos base
         DXXMUtils.GridManager.setupEventListeners(this.element, {
             app: this, settingPrefix: this.prefix,
             onLeftClick: (ev, id) => this._handleLeftClick(ev, id),
@@ -157,13 +191,11 @@ export class DXXMSoundboard extends HandlebarsApplicationMixin(ApplicationV2) {
             headerSelector: ".slots-header"
         });
 
-        // Eventos específicos de volume
         this.element.querySelectorAll('.container-volume-slider').forEach(s => {
             s.addEventListener('input', this._onContainerVolumeInput.bind(this));
             s.addEventListener('change', this._onContainerVolumeChange.bind(this));
         });
 
-        // Drag & Drop (Mesma lógica do Evidence)
         if (game.user.isGM) {
             this.element.querySelectorAll('.evidence-slot').forEach(slot => {
                 slot.setAttribute('draggable', true);
@@ -196,8 +228,13 @@ export class DXXMSoundboard extends HandlebarsApplicationMixin(ApplicationV2) {
             const soundDoc = await fromUuid(data.uuid);
             if (!soundDoc) return;
             this.slotsData[targetId] = {
-                hasItem: true, name: soundDoc.name, src: soundDoc.path || soundDoc.src,
-                img: "fas fa-music", volume: soundDoc.volume || 1.0, loop: false
+                hasItem: true, 
+                name: soundDoc.name, 
+                src: soundDoc.path || soundDoc.src,
+                img: "fas fa-music", 
+                volume: soundDoc.volume ?? 1.0, 
+                loop: soundDoc.loop ?? false,
+                channel: soundDoc.channel ?? "environment"
             };
         }
 
@@ -210,11 +247,25 @@ export class DXXMSoundboard extends HandlebarsApplicationMixin(ApplicationV2) {
         
         const enrichedGrid = grid.map(c => ({
             ...c,
-            volumeDisplay: Math.round((c.volume || 1.0) * 100),
-            slots: c.slots.map(s => ({
-                ...s,
-                isActive: this.activeSounds.has(s.id)
-            }))
+            volumeDisplay: Math.round((c.volume ?? 1.0) * 100),
+            slots: c.slots.map(s => {
+                const item = this.slotsData[s.id] || {};
+                const isFaIcon = typeof item.img === "string" && (
+                    item.img.includes("fa-") || item.img.startsWith("fas") || 
+                    item.img.startsWith("far") || item.img.startsWith("fab")
+                );
+                
+                return {
+                    ...s,
+                    isActive: DXXMSoundboard.activeSounds.has(s.id),
+                    data: {
+                        hasItem: !!item.hasItem,
+                        name: item.name || "",
+                        isIcon: isFaIcon,
+                        img: item.img || "fas fa-music"
+                    }
+                };
+            })
         }));
 
         return { config: this.gridConfig, containers: enrichedGrid, isGM: game.user.isGM };
@@ -223,8 +274,36 @@ export class DXXMSoundboard extends HandlebarsApplicationMixin(ApplicationV2) {
 
 DXXMSoundboard.DEFAULT_OPTIONS.actions = {
     configureGrid: function() { 
+        if (!game.user.isGM) return;
         DXXMUtils.GridManager.configureGrid(this.prefix, this.gridConfig, this.containers).then(r => {
-            if(r) { this.gridConfig = r.newConfig; this.containers = r.newContainers; this.render(true); }
+            if(r) { 
+                this.gridConfig = r.newConfig; 
+                this.containers = r.newContainers; 
+                this.render(true).then(() => this.setPosition({ width: "auto", height: "auto" })); 
+            }
         });
+    },
+
+    forcePreloadAll: function() {
+        if (!game.user.isGM) return;
+        
+        const sources = Object.values(this.slotsData)
+            .filter(s => s.hasItem && s.src)
+            .map(s => s.src);
+
+        if (sources.length === 0) {
+            return ui.notifications.warn("Nenhum áudio configurado no Soundboard para pré-carregar.");
+        }
+
+        // Executa localmente para o GM
+        sources.forEach(src => foundry.audio.AudioHelper.preloadSound(src));
+
+        // Envia comando via Socket para todos os outros clientes
+        game.socket.emit('module.ui-redesign', {
+            action: "preloadSounds",
+            sources: sources
+        });
+
+        ui.notifications.info(`Solicitado pré-carregamento de ${sources.length} áudios para todos os jogadores.`);
     }
 };

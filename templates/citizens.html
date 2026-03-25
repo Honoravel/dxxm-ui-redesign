@@ -2,24 +2,28 @@
     <header class="citizens-header">
         <img src="{{#if locationFlag}}{{locationFlag}}{{else}}icons/svg/d20-grey.svg{{/if}}" alt="Ícone do Local" class="location-flag">
         <div class="citizens-nav-container">
-            {{#if pages.length}}
             <nav class="citizens-hub-bar main-hub-bar">
                 {{#each pages}}
                     <button class="hub-tab page-tab {{#if this.active}}active{{/if}} {{#if this.isHidden}}tab-hidden{{/if}}" data-page="{{this.id}}">
                         {{this.name}}
                     </button>
                 {{/each}}
+                {{#if isGM}}
+                    <button class="hub-tab add-page" title="Novo Local" style="padding: 0 10px; font-weight: bold;"><i class="fas fa-plus"></i></button>
+                {{/if}}
             </nav>
-            {{/if}}
-            {{#if groups.length}}
             <nav class="citizens-hub-bar sub-hub-bar">
                 {{#each groups}}
                     <button class="hub-tab group-tab {{#if this.active}}active{{/if}} {{#if this.isHidden}}tab-hidden{{/if}}" data-group="{{this.id}}">
                         {{this.name}}
                     </button>
                 {{/each}}
+                {{#if isGM}}
+                    {{#if pages.length}}
+                    <button class="hub-tab add-group" title="Novo Grupo" style="padding: 0 10px; font-weight: bold;"><i class="fas fa-plus"></i></button>
+                    {{/if}}
+                {{/if}}
             </nav>
-            {{/if}}
         </div>
     </header>
 
@@ -35,7 +39,11 @@
             {{else}}
                 <div class="empty-state">
                     <i class="fas fa-users-slash"></i>
-                    <p>Nenhum cidadão registrado neste grupo.<br>Use o formato: <em>Nome | Apelido | imagem.png | mascara.png</em></p>
+                    {{#if isGM}}
+                    <p>Nenhum cidadão registrado neste grupo.<br>Arraste e solte um Ator do painel lateral para adicioná-lo.</p>
+                    {{else}}
+                    <p>Nenhum cidadão conhecido aqui.</p>
+                    {{/if}}
                 </div>
             {{/each}}
         </div>
